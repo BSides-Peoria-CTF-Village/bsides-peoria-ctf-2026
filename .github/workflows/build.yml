@@ -39,8 +39,8 @@ jobs:
             for CHAL in $CHALLENGES; do
                 if [[ -f "challenges/$CHAL/Dockerfile" ]]; then
 
-                    CATEGORY=$(dirname "$CHAL")
-                    NAME=$(basename "$CHAL")
+                    CATEGORY=$(dirname "$CHAL" | tr '[:upper:]' '[:lower:]')
+                    NAME=$(basename "$CHAL" | tr '[:upper:]' '[:lower:]')
 
                     if [ "$FIRST" = true ]; then
                         FIRST=false
