@@ -1,0 +1,84 @@
+name: Build Changed Challenge Images
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  detect:
+    runs-on: ubuntu-latest
+
+    outputs:
+      matrix: ${{ steps.detect.outputs.matrix }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+
+      - id: detect
+        shell: bash
+        run: |
+          CHALLENGES=$(git diff --name-only HEAD^ HEAD \
+            | grep '^challenges/' \
+            | awk -F/ 'NF>=4 {print $2 "/" $3}' \
+            | sort -u)
+
+          JSON="["
+
+          FIRST=true
+
+          for CHAL in $CHALLENGES; do
+              if [[ -f "challenges/$CHAL/Dockerfile" ]]; then
+
+                  CATEGORY=$(dirname "$CHAL")
+                  NAME=$(basename "$CHAL")
+
+                  if [ "$FIRST" = true ]; then
+                      FIRST=false
+                  else
+                      JSON+=","
+                  fi
+
+                  JSON+="{\"category\":\"$CATEGORY\",\"name\":\"$NAME\",\"path\":\"challenges/$CHAL\"}"
+              fi
+          done
+
+          JSON+="]"
+
+          echo "$JSON"
+
+          echo "matrix=$JSON" >> "$GITHUB_OUTPUT"
+
+  build:
+    needs: detect
+
+    if: ${{ needs.detect.outputs.matrix != '[]' }}
+
+    strategy:
+      matrix:
+        include: ${{ fromJson(needs.detect.outputs.matrix) }}
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: docker/login-action@v3
+        with:
+          registry: harbor.bsidespeoriac.tf
+          username: ${{ secrets.HARBOR_USERNAME }}
+          password: ${{ secrets.HARBOR_PASSWORD }}
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.path }}
+          file: ${{ matrix.path }}/Dockerfile
+          push: true
+          tags: |
+            harbor.bsidespeoriac.tf/bsides-peoria-ctf/${{ matrix.category }}/${{ matrix.name }}:latest
+            harbor.bsidespeoriac.tf/bsides-peoria-ctf/${{ matrix.category }}/${{ matrix.name }}:${{ github.sha }}
