@@ -23,32 +23,37 @@ jobs:
       - id: detect
         shell: bash
         run: |
-          CHALLENGES=$(git diff --name-only HEAD^ HEAD \
-            | grep '^challenges/' \
-            | awk -F/ 'NF>=4 {print $2 "/" $3}' \
-            | sort -u)
+          # Handle case where HEAD^ doesn't exist (first commit)
+          if ! git rev-parse HEAD^ > /dev/null 2>&1; then
+            JSON="[]"
+          else
+            CHALLENGES=$(git diff --name-only HEAD^ HEAD \
+              | grep '^challenges/' \
+              | awk -F/ 'NF>=4 {print $2 "/" $3}' \
+              | sort -u)
 
-          JSON="["
+            JSON="["
 
-          FIRST=true
+            FIRST=true
 
-          for CHAL in $CHALLENGES; do
-              if [[ -f "challenges/$CHAL/Dockerfile" ]]; then
+            for CHAL in $CHALLENGES; do
+                if [[ -f "challenges/$CHAL/Dockerfile" ]]; then
 
-                  CATEGORY=$(dirname "$CHAL")
-                  NAME=$(basename "$CHAL")
+                    CATEGORY=$(dirname "$CHAL")
+                    NAME=$(basename "$CHAL")
 
-                  if [ "$FIRST" = true ]; then
-                      FIRST=false
-                  else
-                      JSON+=","
-                  fi
+                    if [ "$FIRST" = true ]; then
+                        FIRST=false
+                    else
+                        JSON+=","
+                    fi
 
-                  JSON+="{\"category\":\"$CATEGORY\",\"name\":\"$NAME\",\"path\":\"challenges/$CHAL\"}"
-              fi
-          done
+                    JSON+="{\"category\":\"$CATEGORY\",\"name\":\"$NAME\",\"path\":\"challenges/$CHAL\"}"
+                fi
+            done
 
-          JSON+="]"
+            JSON+="]"
+          fi
 
           echo "$JSON"
 
