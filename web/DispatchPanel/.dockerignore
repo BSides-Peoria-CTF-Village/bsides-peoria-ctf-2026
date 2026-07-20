@@ -1,0 +1,8 @@
+**/bin/
+**/obj/
+.git/
+.dotnet/
+.templateengine/
+.nuget/
+**/node_modules/
+src/AeroDispatchPortal/wwwroot/reports/*.txt

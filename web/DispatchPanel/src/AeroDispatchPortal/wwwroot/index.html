@@ -1,0 +1,354 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>AeroDispatch Control</title>
+  <link rel="icon" type="image/jpeg" href="/logo.jpeg">
+  <link rel="stylesheet" href="/styles.css?v=20260609-bundled-font">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="rail" aria-label="Workspace">
+      <div class="brand">
+        <span class="brand-mark"><img src="/logo.jpeg" alt="" aria-hidden="true"></span>
+        <div>
+          <strong>AeroDispatch</strong>
+          <span>Ops Control</span>
+        </div>
+      </div>
+      <nav>
+        <a class="active" href="#releases" data-view="releases">Flight Releases</a>
+        <a href="#crew" data-view="crew">Crew Desk</a>
+        <a href="#stations" data-view="stations">Stations</a>
+        <a href="#audit" data-view="audit">Audit Trail</a>
+      </nav>
+    </aside>
+
+    <main>
+      <section class="view active" data-view-panel="releases">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Operations control</p>
+            <h1>Flight Release Desk</h1>
+          </div>
+          <div class="scorecard">
+            <span>Departures</span>
+            <strong>42</strong>
+          </div>
+          <div class="scorecard accent">
+            <span>Weather Holds</span>
+            <strong>3</strong>
+          </div>
+        </header>
+
+        <section class="summary-grid" aria-label="Dispatch summary">
+          <article>
+            <span>On-time window</span>
+            <strong>86%</strong>
+          </article>
+          <article>
+            <span>Fuel reviews</span>
+            <strong>9</strong>
+          </article>
+          <article>
+            <span>Station alerts</span>
+            <strong>5</strong>
+          </article>
+        </section>
+
+        <section class="workspace">
+          <div class="panel editor-panel">
+            <div class="panel-head">
+              <div>
+                <h2>Release Packet</h2>
+                <p>Submit the flight release envelope for operational routing.</p>
+              </div>
+              <div class="button-row">
+                <button id="sampleButton" type="button">Load Sample</button>
+                <button id="submitButton" type="button" class="primary">Submit Release</button>
+              </div>
+            </div>
+            <textarea id="packet" spellcheck="false" aria-label="Flight release packet"></textarea>
+          </div>
+
+          <div class="panel result-panel">
+            <div class="panel-head">
+              <div>
+                <h2>Release Result</h2>
+                <p id="latency">Idle</p>
+              </div>
+            </div>
+            <pre id="response">{}</pre>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" data-view-panel="crew" hidden>
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Crew operations</p>
+            <h1>Crew Desk</h1>
+          </div>
+          <div class="scorecard">
+            <span>Duty Pairs</span>
+            <strong>18</strong>
+          </div>
+          <div class="scorecard accent">
+            <span>Open Calls</span>
+            <strong>2</strong>
+          </div>
+        </header>
+
+        <section class="summary-grid" aria-label="Crew summary">
+          <article>
+            <span>Reserve coverage</span>
+            <strong>94%</strong>
+          </article>
+          <article>
+            <span>Fatigue checks</span>
+            <strong>7</strong>
+          </article>
+          <article>
+            <span>Hotel vans</span>
+            <strong>11</strong>
+          </article>
+        </section>
+
+        <section class="ops-grid">
+          <div class="panel span-2">
+            <div class="panel-head">
+              <div>
+                <h2>Pairing Monitor</h2>
+                <p>Current crew movements and coverage notes.</p>
+              </div>
+            </div>
+            <table class="ops-table">
+              <thead>
+                <tr>
+                  <th>Pairing</th>
+                  <th>Base</th>
+                  <th>Crew</th>
+                  <th>Report</th>
+                  <th>Note</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>AX2208</td>
+                  <td>KORD</td>
+                  <td>Vargas / Patel / C17</td>
+                  <td>18:05</td>
+                  <td><span class="tag good">On duty</span></td>
+                </tr>
+                <tr>
+                  <td>AX1182</td>
+                  <td>KATL</td>
+                  <td>Cho / Stein / D09</td>
+                  <td>19:20</td>
+                  <td>Crew meal re-cater</td>
+                </tr>
+                <tr>
+                  <td>AX7335</td>
+                  <td>KSFO</td>
+                  <td>Morgan / Duarte / B14</td>
+                  <td>20:10</td>
+                  <td>MX rider added</td>
+                </tr>
+                <tr>
+                  <td>AX5290</td>
+                  <td>KDFW</td>
+                  <td>Lowell / Singh / E03</td>
+                  <td>20:45</td>
+                  <td><span class="tag warn">Jumpseat hold</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Crew Messages</h2>
+                <p>Desk advisories pending acknowledgement.</p>
+              </div>
+            </div>
+            <ul class="ops-list">
+              <li><strong>ORD van 14</strong><span>Terminal 3 pickup moved to door 2G.</span></li>
+              <li><strong>DEN hotel rotation</strong><span>Long layover block moved to Summit Tower.</span></li>
+              <li><strong>SEA reserve C6</strong><span>Airport standby extended through 23:30 local.</span></li>
+              <li><strong>ATL training</strong><span>Line check observer seated 12C on AX1182.</span></li>
+            </ul>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" data-view-panel="stations" hidden>
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Network control</p>
+            <h1>Stations</h1>
+          </div>
+          <div class="scorecard">
+            <span>Active Gates</span>
+            <strong>63</strong>
+          </div>
+          <div class="scorecard accent">
+            <span>Ramp Holds</span>
+            <strong>4</strong>
+          </div>
+        </header>
+
+        <section class="summary-grid" aria-label="Station summary">
+          <article>
+            <span>Turn compliance</span>
+            <strong>91%</strong>
+          </article>
+          <article>
+            <span>Belt exceptions</span>
+            <strong>6</strong>
+          </article>
+          <article>
+            <span>Catering swaps</span>
+            <strong>8</strong>
+          </article>
+        </section>
+
+        <section class="ops-grid">
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Station Pulse</h2>
+                <p>Local service posture by airport.</p>
+              </div>
+            </div>
+            <ul class="station-list">
+              <li><strong>KORD</strong><span>Gate C12 bridge slow retract, tug 7 assigned.</span><em>Normal</em></li>
+              <li><strong>KDEN</strong><span>Deice pad Alpha closed for striping.</span><em>Advisory</em></li>
+              <li><strong>KSFO</strong><span>Fuel farm pressure variance cleared at 16:42.</span><em>Normal</em></li>
+              <li><strong>KMCO</strong><span>Belt 4 encoder intermittent, manual tag scans active.</span><em>Watch</em></li>
+              <li><strong>KSEA</strong><span>Late bags from interline cart 22, expedite requested.</span><em>Watch</em></li>
+            </ul>
+          </div>
+
+          <div class="panel span-2">
+            <div class="panel-head">
+              <div>
+                <h2>Turn Board</h2>
+                <p>Ground events sampled from station handoff.</p>
+              </div>
+            </div>
+            <table class="ops-table">
+              <thead>
+                <tr>
+                  <th>Flight</th>
+                  <th>Station</th>
+                  <th>Gate</th>
+                  <th>Event</th>
+                  <th>Owner</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>AX4817</td>
+                  <td>KORD</td>
+                  <td>C12</td>
+                  <td>Fuel slip pending dispatcher match</td>
+                  <td>Fuel desk</td>
+                </tr>
+                <tr>
+                  <td>AX2044</td>
+                  <td>KDEN</td>
+                  <td>B38</td>
+                  <td>Lav service complete, potable water in progress</td>
+                  <td>Ramp lead</td>
+                </tr>
+                <tr>
+                  <td>AX3179</td>
+                  <td>KMCO</td>
+                  <td>92</td>
+                  <td>Wheelchair count revised from 3 to 5</td>
+                  <td>Customer ops</td>
+                </tr>
+                <tr>
+                  <td>AX7335</td>
+                  <td>KSFO</td>
+                  <td>F14</td>
+                  <td>Bagroom late cart merged to hold 2</td>
+                  <td>Station control</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="view" data-view-panel="audit" hidden>
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">Compliance</p>
+            <h1>Audit Trail</h1>
+          </div>
+          <div class="scorecard">
+            <span>Events</span>
+            <strong>128</strong>
+          </div>
+          <div class="scorecard accent">
+            <span>Reviews</span>
+            <strong>5</strong>
+          </div>
+        </header>
+
+        <section class="summary-grid" aria-label="Audit summary">
+          <article>
+            <span>Release edits</span>
+            <strong>17</strong>
+          </article>
+          <article>
+            <span>EFB syncs</span>
+            <strong>54</strong>
+          </article>
+          <article>
+            <span>Manual overrides</span>
+            <strong>2</strong>
+          </article>
+        </section>
+
+        <section class="ops-grid">
+          <div class="panel span-2">
+            <div class="panel-head">
+              <div>
+                <h2>Event Ledger</h2>
+                <p>Recent operational changes captured from dispatch systems.</p>
+              </div>
+            </div>
+            <ol class="audit-list">
+              <li><time>17:42Z</time><span>morgan.lee added KPUB alternate to AX4817 after convective SIGMET review.</span></li>
+              <li><time>17:39Z</time><span>station.den acknowledged gate swap B36 to B38 for AX2044.</span></li>
+              <li><time>17:31Z</time><span>crewdesk.ord updated hotel voucher batch ORD-2861 with late checkout code.</span></li>
+              <li><time>17:18Z</time><span>fuel.ops accepted uplift delta +1.2 for AX7335, receipt attached.</span></li>
+              <li><time>17:07Z</time><span>audit.bot sampled release packet 58410 and found no missing signatures.</span></li>
+            </ol>
+          </div>
+
+          <div class="panel">
+            <div class="panel-head">
+              <div>
+                <h2>Watch Items</h2>
+                <p>Items waiting for routine reconciliation.</p>
+              </div>
+            </div>
+            <ul class="ops-list compact">
+              <li><strong>AX3179</strong><span>Wheelchair manifest changed after closeout.</span></li>
+              <li><strong>KSEA</strong><span>Interline late bag exception needs station note.</span></li>
+              <li><strong>AX5290</strong><span>Jumpseat authorization pending final crew desk stamp.</span></li>
+              <li><strong>KDEN</strong><span>Pad Alpha advisory scheduled to expire at 21:00Z.</span></li>
+            </ul>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+  <script src="/app.js?v=20260609-aero-ops"></script>
+</body>
+</html>
