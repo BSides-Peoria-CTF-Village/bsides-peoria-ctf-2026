@@ -27,10 +27,16 @@ jobs:
           if ! git rev-parse HEAD^ > /dev/null 2>&1; then
             JSON="[]"
           else
+            echo "Changed files:"
+            git diff --name-only HEAD^ HEAD
+
             CHALLENGES=$(git diff --name-only HEAD^ HEAD \
-              | grep '^challenges/' \
-              | awk -F/ 'NF>=4 {print $2 "/" $3}' \
-              | sort -u)
+            | grep '^challenges/' \
+            | awk -F/ 'NF>=3 {print $2 "/" $3}' \
+            | sort -u)
+
+          echo "Detected:"
+          echo "$CHALLENGES"
 
             JSON="["
 
