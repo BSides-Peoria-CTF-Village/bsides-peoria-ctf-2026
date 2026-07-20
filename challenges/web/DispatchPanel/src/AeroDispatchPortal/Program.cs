@@ -6,7 +6,7 @@ var app = builder.Build();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
-
+// shouldve made this more PIA themed
 app.MapGet("/api/schema", () => Results.Json(new
 {
     title = "Flight release coordination",
