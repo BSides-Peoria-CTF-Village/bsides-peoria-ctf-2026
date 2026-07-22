@@ -6,6 +6,7 @@ var app = builder.Build();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
+// shouldve made this more PIA theme
 
 app.MapGet("/api/schema", () => Results.Json(new
 {
