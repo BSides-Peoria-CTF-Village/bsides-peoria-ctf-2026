@@ -1,12 +1,18 @@
-name: Build Changed Challenge Images
+name: Build and Sync Changed Challenges
 
 on:
   push:
     branches:
       - main
+  workflow_dispatch:
 
 permissions:
   contents: read
+
+env:
+  HARBOR_REGISTRY: harbor.bsidespeoriac.tf
+  HARBOR_PROJECT: bsides-peoria-ctf
+  CTFD_URL: ${{ secrets.CTFD_URL }}
 
 jobs:
   detect:
@@ -18,48 +24,75 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 2
+          fetch-depth: 0
 
       - id: detect
         shell: bash
         run: |
-          CHALLENGES=$(git diff --name-only HEAD^ HEAD \
-            | grep '^challenges/' \
-            | awk -F/ 'NF>=4 {print $2 "/" $3}' \
-            | sort -u)
+          set -euo pipefail
+
+          if git rev-parse HEAD^ >/dev/null 2>&1; then
+            echo "Changed files:"
+            git diff --name-only HEAD^ HEAD
+
+            CHANGED_FILES=$(git diff --name-only HEAD^ HEAD)
+          else
+            CHANGED_FILES=$(find . -type f | sed 's#^\./##')
+          fi
+
+          CHALLENGES=$(
+            printf '%s\n' "$CHANGED_FILES" \
+              | awk -F/ '
+                  /^challenges\/[^/]+\/[^/]+\// { print $2 "/" $3; next }
+                  /^[^/.][^/]*\/[^/]+\// && $1 != ".github" { print $1 "/" $2; next }
+                ' \
+              | sort -u
+          )
 
           JSON="["
-
           FIRST=true
 
           for CHAL in $CHALLENGES; do
-              if [[ -f "challenges/$CHAL/Dockerfile" ]]; then
+            if [[ -d "challenges/$CHAL" ]]; then
+              PATH_ON_DISK="challenges/$CHAL"
+            else
+              PATH_ON_DISK="$CHAL"
+            fi
 
-                  CATEGORY=$(dirname "$CHAL")
-                  NAME=$(basename "$CHAL")
+            if [[ -f "$PATH_ON_DISK/Dockerfile" && -f "$PATH_ON_DISK/challenge.yaml" ]]; then
+              CATEGORY=$(dirname "$CHAL" | tr '[:upper:]' '[:lower:]')
+              SLUG=$(basename "$CHAL" | tr '[:upper:]' '[:lower:]')
 
-                  if [ "$FIRST" = true ]; then
-                      FIRST=false
-                  else
-                      JSON+=","
-                  fi
+              ITEM=$(jq -cn \
+                --arg category "$CATEGORY" \
+                --arg slug "$SLUG" \
+                --arg path "$PATH_ON_DISK" \
+                --arg yaml "$PATH_ON_DISK/challenge.yaml" \
+                '{category:$category, slug:$slug, path:$path, yaml:$yaml}')
 
-                  JSON+="{\"category\":\"$CATEGORY\",\"name\":\"$NAME\",\"path\":\"challenges/$CHAL\"}"
+              if [[ "$FIRST" == "true" ]]; then
+                FIRST=false
+              else
+                JSON+=","
               fi
+
+              JSON+="$ITEM"
+            else
+              echo "Skipping $PATH_ON_DISK; Dockerfile and challenge.yaml are both required."
+            fi
           done
 
           JSON+="]"
-
           echo "$JSON"
-
           echo "matrix=$JSON" >> "$GITHUB_OUTPUT"
 
-  build:
+  build-and-sync:
     needs: detect
 
     if: ${{ needs.detect.outputs.matrix != '[]' }}
 
     strategy:
+      fail-fast: false
       matrix:
         include: ${{ fromJson(needs.detect.outputs.matrix) }}
 
@@ -68,17 +101,193 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - uses: docker/login-action@v3
+      - name: Install yq
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          sudo wget -qO /usr/local/bin/yq \
+            https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64
+          sudo chmod +x /usr/local/bin/yq
+
+      - name: Log in to Harbor
+        uses: docker/login-action@v3
         with:
-          registry: harbor.bsidespeoriac.tf
+          registry: ${{ env.HARBOR_REGISTRY }}
           username: ${{ secrets.HARBOR_USERNAME }}
           password: ${{ secrets.HARBOR_PASSWORD }}
 
-      - uses: docker/build-push-action@v6
+      - name: Build and push image
+        uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.path }}
           file: ${{ matrix.path }}/Dockerfile
           push: true
           tags: |
-            harbor.bsidespeoriac.tf/bsides-peoria-ctf/${{ matrix.category }}/${{ matrix.name }}:latest
-            harbor.bsidespeoriac.tf/bsides-peoria-ctf/${{ matrix.category }}/${{ matrix.name }}:${{ github.sha }}
+            ${{ env.HARBOR_REGISTRY }}/${{ env.HARBOR_PROJECT }}/${{ matrix.category }}/${{ matrix.slug }}:latest
+            ${{ env.HARBOR_REGISTRY }}/${{ env.HARBOR_PROJECT }}/${{ matrix.category }}/${{ matrix.slug }}:${{ github.sha }}
+
+      - name: Create or update CTFd challenge
+        shell: bash
+        env:
+          CTFD_TOKEN: ${{ secrets.CTFD_TOKEN }}
+          CATEGORY: ${{ matrix.category }}
+          SLUG: ${{ matrix.slug }}
+          YAML_FILE: ${{ matrix.yaml }}
+          IMAGE: ${{ env.HARBOR_REGISTRY }}/${{ env.HARBOR_PROJECT }}/${{ matrix.category }}/${{ matrix.slug }}:latest
+        run: |
+          set -euo pipefail
+
+          require_secret() {
+            local name="$1"
+            local value="$2"
+
+            if [[ -z "$value" ]]; then
+              echo "$name is required"
+              exit 1
+            fi
+          }
+
+          require_secret CTFD_URL "$CTFD_URL"
+          require_secret CTFD_TOKEN "$CTFD_TOKEN"
+
+          NAME=$(yq -r '.name // env(SLUG)' "$YAML_FILE")
+          CATEGORY_FROM_YAML=$(yq -r '.category // env(CATEGORY)' "$YAML_FILE")
+          DESCRIPTION=$(yq -r '.description // ""' "$YAML_FILE")
+          FUNCTION=$(yq -r '.function // "logarithmic"' "$YAML_FILE")
+          INITIAL=$(yq -r '.initial // .value // 500' "$YAML_FILE")
+          MINIMUM=$(yq -r '.minimum // 100' "$YAML_FILE")
+          DECAY=$(yq -r '.decay // 9' "$YAML_FILE")
+          STATE=$(yq -r '.state // "visible"' "$YAML_FILE")
+          MAX_ATTEMPTS=$(yq -r '.max_attempts // 0' "$YAML_FILE")
+          ATTRIBUTION=$(yq -r '.attribution // ""' "$YAML_FILE")
+          PREFIX=$(yq -r '.docker_container_prefix // "ctfd"' "$YAML_FILE")
+          CONNECTION_SCHEME=$(yq -r '.connection_scheme // .docker_connection_scheme // ""' "$YAML_FILE")
+          IMAGE_FROM_YAML=$(yq -r '.docker_image // ""' "$YAML_FILE")
+
+          if [[ -n "$IMAGE_FROM_YAML" && "$IMAGE_FROM_YAML" != "null" ]]; then
+            IMAGE="$IMAGE_FROM_YAML"
+          fi
+
+          EXISTING_ID=$(
+            curl -sS \
+              -H "Authorization: Token $CTFD_TOKEN" \
+              -H "Content-Type: application/json" \
+              "$CTFD_URL/api/v1/challenges" \
+              | jq -r --arg name "$NAME" --arg category "$CATEGORY_FROM_YAML" '
+                  .data[]
+                  | select(.name == $name and .category == $category)
+                  | .id
+                ' \
+              | head -n1
+          )
+
+          PAYLOAD=$(
+            jq -n \
+              --arg name "$NAME" \
+              --arg category "$CATEGORY_FROM_YAML" \
+              --arg description "$DESCRIPTION" \
+              --arg state "$STATE" \
+              --arg attribution "$ATTRIBUTION" \
+              --arg image "$IMAGE" \
+              --arg prefix "$PREFIX" \
+              --arg connection_scheme "$CONNECTION_SCHEME" \
+              --arg function "$FUNCTION" \
+              --argjson initial "$INITIAL" \
+              --argjson minimum "$MINIMUM" \
+              --argjson decay "$DECAY" \
+              --argjson max_attempts "$MAX_ATTEMPTS" \
+              '{
+                name: $name,
+                category: $category,
+                description: $description,
+                value: $initial,
+                function: $function,
+                initial: $initial,
+                minimum: $minimum,
+                decay: $decay,
+                state: $state,
+                max_attempts: $max_attempts,
+                attribution: $attribution,
+                type: "docker",
+                docker_image: $image,
+                docker_container_prefix: $prefix,
+                docker_connection_scheme: $connection_scheme
+              }'
+          )
+
+          if [[ -z "$EXISTING_ID" ]]; then
+            echo "Creating CTFd challenge: $CATEGORY_FROM_YAML/$NAME"
+            RESPONSE=$(
+              curl -sS -X POST \
+                -H "Authorization: Token $CTFD_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "$PAYLOAD" \
+                "$CTFD_URL/api/v1/challenges"
+            )
+          else
+            echo "Updating CTFd challenge #$EXISTING_ID: $CATEGORY_FROM_YAML/$NAME"
+            RESPONSE=$(
+              curl -sS -X PATCH \
+                -H "Authorization: Token $CTFD_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "$PAYLOAD" \
+                "$CTFD_URL/api/v1/challenges/$EXISTING_ID"
+            )
+          fi
+
+          echo "$RESPONSE" | jq .
+
+          if [[ "$(echo "$RESPONSE" | jq -r '.success')" != "true" ]]; then
+            echo "CTFd challenge sync failed"
+            exit 1
+          fi
+
+          CHALLENGE_ID=$(echo "$RESPONSE" | jq -r '.data.id')
+          FLAGS_JSON=$(yq -o=json '([.flags[]?] + (if .flag then [.flag] else [] end))' "$YAML_FILE")
+
+          if [[ "$(echo "$FLAGS_JSON" | jq 'length')" -gt 0 ]]; then
+            echo "Replacing flags for challenge #$CHALLENGE_ID"
+
+            EXISTING_FLAGS=$(
+              curl -sS \
+                -H "Authorization: Token $CTFD_TOKEN" \
+                -H "Content-Type: application/json" \
+                "$CTFD_URL/api/v1/flags" \
+                | jq -r --argjson challenge_id "$CHALLENGE_ID" '
+                    .data[]
+                    | select(.challenge_id == $challenge_id)
+                    | .id
+                  '
+            )
+
+            for FLAG_ID in $EXISTING_FLAGS; do
+              curl -sS -X DELETE \
+                -H "Authorization: Token $CTFD_TOKEN" \
+                "$CTFD_URL/api/v1/flags/$FLAG_ID" \
+                | jq .
+            done
+
+            echo "$FLAGS_JSON" | jq -r '.[]' | while IFS= read -r FLAG; do
+              FLAG_PAYLOAD=$(
+                jq -n \
+                  --argjson challenge_id "$CHALLENGE_ID" \
+                  --arg content "$FLAG" \
+                  '{
+                    challenge_id: $challenge_id,
+                    type: "static",
+                    content: $content,
+                    data: "case_insensitive"
+                  }'
+              )
+
+              curl -sS -X POST \
+                -H "Authorization: Token $CTFD_TOKEN" \
+                -H "Content-Type: application/json" \
+                -d "$FLAG_PAYLOAD" \
+                "$CTFD_URL/api/v1/flags" \
+                | jq .
+            done
+          else
+            echo "No flag or flags configured in $YAML_FILE; leaving existing CTFd flags unchanged."
+          fi

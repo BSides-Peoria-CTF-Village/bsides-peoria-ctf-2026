@@ -27,7 +27,7 @@ app.MapGet("/api/schema", () => Results.Json(new
         }
     }
 }));
-
+// guys wait i should have made it more PIA themed
 app.MapGet("/api/releases", () => Results.Json(new
 {
     endpoint = "/api/releases",

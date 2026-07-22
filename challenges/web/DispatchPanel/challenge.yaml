@@ -1,0 +1,11 @@
+name: Dispatch Panel
+category: web
+connection_scheme: http
+description: |
+  We vibe coded this new panel to help our managerial people keep track of everything. It's a WIP, but just because we're so proud of it, we pushed it to prod anyways.
+function: logarithmic
+initial: 500
+minimum: 100
+decay: 9
+state: visible
+flag: PIA{5ur3ly_js0n_is_r34lly_secur3!_d910a91b}
