@@ -244,7 +244,15 @@ jobs:
           fi
 
           CHALLENGE_ID=$(echo "$RESPONSE" | jq -r '.data.id')
-          FLAGS_JSON=$(yq -o=json '([.flags[]?] + (if .flag then [.flag] else [] end))' "$YAML_FILE")
+          FLAGS_JSON=$(
+            {
+              yq -r '.flags[]? // ""' "$YAML_FILE"
+              yq -r '.flag // ""' "$YAML_FILE"
+            } \
+              | sed '/^$/d' \
+              | jq -R . \
+              | jq -s .
+          )
 
           if [[ "$(echo "$FLAGS_JSON" | jq 'length')" -gt 0 ]]; then
             echo "Replacing flags for challenge #$CHALLENGE_ID"
