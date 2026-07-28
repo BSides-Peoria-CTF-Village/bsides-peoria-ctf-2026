@@ -1,0 +1,11 @@
+name: Flightlog
+category: web
+connection_scheme: http
+description: |
+  what kind of pilot doesn't log their flights??
+function: logarithmic
+initial: 500
+minimum: 100
+decay: 9
+state: visible
+flag: PIA{W@s_th4t_3ven_!nt3nti0nal?_btw_dm_me_on_discord_with_your_solution_@iiNovaCore_1abf19ac}
