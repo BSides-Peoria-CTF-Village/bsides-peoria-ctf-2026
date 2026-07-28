@@ -67,19 +67,23 @@ async function visit(url) {
   }
 }
 
-(async () => {
-  const url = process.argv[2];
+module.exports = { visit };
 
-  if (!url) {
-    console.error("Usage: node bot.js <url>");
-    process.exit(1);
-  }
+if (require.main === module) {
+  (async () => {
+    const url = process.argv[2];
 
-  try {
-    await visit(url);
-    console.log("Done.");
-  } catch (err) {
-    console.error(err.message);
-    process.exit(1);
-  }
-})();
+    if (!url) {
+      console.error("Usage: node bot.js <url>");
+      process.exit(1);
+    }
+
+    try {
+      await visit(url);
+      console.log("Done.");
+    } catch (err) {
+      console.error(err.message);
+      process.exit(1);
+    }
+  })();
+}
