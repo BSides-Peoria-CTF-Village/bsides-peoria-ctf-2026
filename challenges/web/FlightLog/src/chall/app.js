@@ -13,7 +13,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use((req, res, next) => {
     res.set(
         "Content-Security-Policy",
-        "default-src *.bsidespeoriac.tf"
+        "default-src *.bsidespeoriac.tf:*"
     );
     next();
 });

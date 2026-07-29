@@ -28,6 +28,10 @@ RUN --mount=type=bind,source=src/chall/package.json,target=package.json \
     --mount=type=cache,target=/root/.npm \
     npm ci --omit=dev
 
+# The application runs as `node` and stores submitted notes here.
+RUN mkdir -p ./src/chall/notes \
+    && chown node:node ./src/chall/notes
+
 # Run the application as a non-root user.
 USER node
 
