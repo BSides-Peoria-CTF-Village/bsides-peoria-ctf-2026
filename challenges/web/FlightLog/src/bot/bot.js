@@ -2,10 +2,33 @@ const fs = require("fs/promises");
 const path = require("path");
 const puppeteer = require("puppeteer");
 
-const ALLOWED_HOST_RE = /^([a-z0-9-]+\.)*bsidespeoriac\.tf$/i;
-const TARGET_RE =
-  /^https?:\/\/challs\.bsidespeoriac\.tf:\d+\/note(?:\/?|[?#].*)?$/i;
+const ALLOWED_HOST_RE = /^(localhost|127\.0\.0\.1|([a-z0-9-]+\.)*bsidespeoriac\.tf)$/i;
 const FLAG_PATH = path.resolve(__dirname, "..", "..", "flag.txt");
+const BOT_ORIGIN = new URL(process.env.BOT_ORIGIN || "http://localhost:3000");
+
+function resolveNotePath(notePath) {
+  try {
+    if (typeof notePath !== "string") {
+      return null;
+    }
+
+    const target = new URL(notePath, BOT_ORIGIN);
+
+    // A report may only select a note on FlightLog itself. This rejects
+    // absolute URLs and scheme-relative paths that resolve to another host.
+    if (target.origin !== BOT_ORIGIN.origin) {
+      return null;
+    }
+
+    if (!/^\/note\/[0-9a-f-]{36}$/i.test(target.pathname)) {
+      return null;
+    }
+
+    return target;
+  } catch {
+    return null;
+  }
+}
 
 async function loadFlag() {
   try {
@@ -16,10 +39,12 @@ async function loadFlag() {
   }
 }
 
-async function visit(url) {
-  if (!TARGET_RE.test(url)) {
+async function visit(notePath) {
+  const target = resolveNotePath(notePath);
+
+  if (!target) {
     throw new Error(
-      "URL must be http(s)://challs.bsidespeoriac.tf:<port>/note"
+      "Note path must be /note/<UUID>."
     );
   }
 
@@ -38,7 +63,7 @@ async function visit(url) {
     await page.setCookie({
       name: "flag",
       value: flag,
-      url,
+      url: target.href,
       path: "/",
     });
   }
@@ -77,7 +102,7 @@ async function visit(url) {
   });
 
   try {
-    await page.goto(url, {
+    await page.goto(target.href, {
       waitUntil: "networkidle2",
       timeout: 10000,
     });
@@ -89,19 +114,19 @@ async function visit(url) {
   }
 }
 
-module.exports = { visit };
+module.exports = { visit, resolveNotePath };
 
 if (require.main === module) {
   (async () => {
-    const url = process.argv[2];
+    const notePath = process.argv[2];
 
-    if (!url) {
-      console.error("Usage: node bot.js <url>");
+    if (!notePath) {
+      console.error("Usage: node bot.js /note/<UUID>");
       process.exit(1);
     }
 
     try {
-      await visit(url);
+      await visit(notePath);
       console.log("Done.");
     } catch (err) {
       console.error(err.message);

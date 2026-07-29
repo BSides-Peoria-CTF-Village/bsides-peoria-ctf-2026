@@ -13,7 +13,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use((req, res, next) => {
     res.set(
         "Content-Security-Policy",
-        "default-src *.bsidespeoriac.tf:*"
+        "default-src 'self' localhost:3000 127.0.0.1:3000 *.bsidespeoriac.tf:*"
     );
     next();
 });
@@ -41,8 +41,8 @@ app.get("/", (req, res) => {
 
                 <p>Report a note URL for admin review.</p>
                 <form action="/report" method="post">
-                    <label for="url">Note URL</label><br>
-                    <input id="url" name="url" type="url" size="80" required><br><br>
+                    <label for="notePath">Note path</label><br>
+                    <input id="notePath" name="notePath" type="text" placeholder="/note/&lt;id&gt;" size="80" required><br><br>
                     <button type="submit">Report URL</button>
                 </form>
             </body>
@@ -107,14 +107,14 @@ app.get("/note/:id", async (req, res) => {
 });
 
 app.post("/report", async (req, res) => {
-    const { url } = req.body;
+    const { notePath } = req.body;
 
-    if (!url) {
-        return res.status(400).send("Please provide a URL.");
+    if (!notePath) {
+        return res.status(400).send("Please provide a note path.");
     }
 
     try {
-        await visit(url);
+        await visit(notePath);
         return res.send("Admin will review your report.");
     } catch (err) {
         return res.status(400).send(err.message);
