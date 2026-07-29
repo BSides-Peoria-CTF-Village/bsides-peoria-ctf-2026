@@ -1,8 +1,20 @@
+const fs = require("fs/promises");
+const path = require("path");
 const puppeteer = require("puppeteer");
 
 const ALLOWED_HOST_RE = /^([a-z0-9-]+\.)*bsidespeoriac\.tf$/i;
 const TARGET_RE =
   /^https?:\/\/challs\.bsidespeoriac\.tf:\d+\/note(?:\/?|[?#].*)?$/i;
+const FLAG_PATH = path.resolve(__dirname, "..", "..", "flag.txt");
+
+async function loadFlag() {
+  try {
+    return (await fs.readFile(FLAG_PATH, "utf8")).trim();
+  } catch (err) {
+    console.warn("Flag file not available; continuing without cookie.", err.message);
+    return "";
+  }
+}
 
 async function visit(url) {
   if (!TARGET_RE.test(url)) {
@@ -20,6 +32,16 @@ async function visit(url) {
   });
 
   const page = await browser.newPage();
+  const flag = await loadFlag();
+
+  if (flag) {
+    await page.setCookie({
+      name: "flag",
+      value: flag,
+      url,
+      path: "/",
+    });
+  }
 
   await page.setRequestInterception(true);
 

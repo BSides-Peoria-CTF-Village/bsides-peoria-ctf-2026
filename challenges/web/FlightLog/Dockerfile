@@ -16,6 +16,10 @@ ENV NODE_ENV=production
 
 WORKDIR /usr/src/app
 
+COPY src/chall ./src/chall
+COPY src/bot ./src/bot
+COPY flag.txt ./flag.txt
+
 # Download dependencies as a separate step to take advantage of Docker's caching.
 # Leverage a cache mount to /root/.npm to speed up subsequent builds.
 # The Node application and its dependency manifests live under src/chall.
@@ -27,8 +31,7 @@ RUN --mount=type=bind,source=src/chall/package.json,target=package.json \
 # Run the application as a non-root user.
 USER node
 
-# Copy the application and bot source while preserving their relative paths.
-COPY src/ ./src/
+# Copy the application source into the working directory.
 
 # Expose the port that the application listens on.
 EXPOSE 3000

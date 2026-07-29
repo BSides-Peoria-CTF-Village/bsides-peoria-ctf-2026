@@ -21,7 +21,24 @@ app.use((req, res, next) => {
 const NOTES_DIR = path.join(__dirname, "notes");
 
 app.get("/", (req, res) => {
-    res.send("Welcome to the Flight Log application!");
+    res.type("html").send(`
+        <!doctype html>
+        <html lang="en">
+            <head>
+                <meta charset="utf-8">
+                <title>Flight Log</title>
+            </head>
+            <body>
+                <h1>Flight Log</h1>
+                <p>Leave a note for the flight crew.</p>
+                <form action="/note" method="post">
+                    <label for="note">Log entry</label><br>
+                    <textarea id="note" name="note" rows="8" cols="60" required></textarea><br><br>
+                    <button type="submit">Submit Note</button>
+                </form>
+            </body>
+        </html>
+    `);
 });
 
 app.post("/note", async (req, res) => {
