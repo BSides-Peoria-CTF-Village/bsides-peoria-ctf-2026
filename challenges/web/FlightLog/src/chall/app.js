@@ -36,6 +36,15 @@ app.get("/", (req, res) => {
                     <textarea id="note" name="note" rows="8" cols="60" required></textarea><br><br>
                     <button type="submit">Submit Note</button>
                 </form>
+
+                <hr>
+
+                <p>Report a note URL for admin review.</p>
+                <form action="/report" method="post">
+                    <label for="url">Note URL</label><br>
+                    <input id="url" name="url" type="url" size="80" required><br><br>
+                    <button type="submit">Report URL</button>
+                </form>
             </body>
         </html>
     `);
