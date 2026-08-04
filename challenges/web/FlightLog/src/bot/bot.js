@@ -14,8 +14,6 @@ function resolveNotePath(notePath) {
 
     const target = new URL(notePath, BOT_ORIGIN);
 
-    // A report may only select a note on FlightLog itself. This rejects
-    // absolute URLs and scheme-relative paths that resolve to another host.
     if (target.origin !== BOT_ORIGIN.origin) {
       return null;
     }
@@ -74,7 +72,6 @@ async function visit(notePath) {
     try {
       const reqUrl = new URL(req.url());
 
-      // Allow data/blob URLs
       if (
         reqUrl.protocol === "data:" ||
         reqUrl.protocol === "blob:"
@@ -82,7 +79,6 @@ async function visit(notePath) {
         return req.continue();
       }
 
-      // Block everything except *.bsidespeoriac.tf
       if (
         reqUrl.protocol !== "http:" &&
         reqUrl.protocol !== "https:"

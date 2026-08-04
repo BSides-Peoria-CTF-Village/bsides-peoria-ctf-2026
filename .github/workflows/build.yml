@@ -218,6 +218,7 @@ jobs:
 
           if [[ -z "$EXISTING_ID" ]]; then
             echo "Creating CTFd challenge: $CATEGORY_FROM_YAML/$NAME"
+            CHALLENGE_CREATED=true
             RESPONSE=$(
               curl -sS -X POST \
                 -H "Authorization: Token $CTFD_TOKEN" \
@@ -227,6 +228,7 @@ jobs:
             )
           else
             echo "Updating CTFd challenge #$EXISTING_ID: $CATEGORY_FROM_YAML/$NAME"
+            CHALLENGE_CREATED=false
             RESPONSE=$(
               curl -sS -X PATCH \
                 -H "Authorization: Token $CTFD_TOKEN" \
@@ -254,7 +256,7 @@ jobs:
               | jq -s .
           )
 
-          if [[ "$(echo "$FLAGS_JSON" | jq 'length')" -gt 0 ]]; then
+          if [[ "$CHALLENGE_CREATED" == "true" && "$(echo "$FLAGS_JSON" | jq 'length')" -gt 0 ]]; then
             echo "Replacing flags for challenge #$CHALLENGE_ID"
 
             EXISTING_FLAGS=$(
@@ -296,6 +298,8 @@ jobs:
                 "$CTFD_URL/api/v1/flags" \
                 | jq .
             done
+          elif [[ "$(echo "$FLAGS_JSON" | jq 'length')" -gt 0 ]]; then
+            echo "CTFd challenge #$CHALLENGE_ID already exists; leaving its flags unchanged."
           else
             echo "No flag or flags configured in $YAML_FILE; leaving existing CTFd flags unchanged."
           fi
