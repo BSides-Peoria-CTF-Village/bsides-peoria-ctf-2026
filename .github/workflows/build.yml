@@ -151,6 +151,10 @@ jobs:
           require_secret CTFD_URL "$CTFD_URL"
           require_secret CTFD_TOKEN "$CTFD_TOKEN"
 
+          # Secrets are commonly entered with a trailing slash. Normalize the
+          # base URL so every API path below has exactly one separating slash.
+          CTFD_URL="${CTFD_URL%/}"
+
           NAME=$(yq -r '.name // env(SLUG)' "$YAML_FILE")
           CATEGORY_FROM_YAML=$(yq -r '.category // env(CATEGORY)' "$YAML_FILE")
           DESCRIPTION=$(yq -r '.description // ""' "$YAML_FILE")
