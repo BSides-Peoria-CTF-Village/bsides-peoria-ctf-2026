@@ -173,19 +173,47 @@ jobs:
             IMAGE="$IMAGE_FROM_YAML"
           fi
 
-          EXISTING_ID=$(
-            curl -sS \
-              -H "Authorization: Token $CTFD_TOKEN" \
-              -H "Accept: application/json" \
-              -H "Content-Type: application/json" \
-              "$CTFD_URL/api/v1/challenges" \
-              | jq -r --arg name "$NAME" --arg category "$CATEGORY_FROM_YAML" '
-                  .data[]
-                  | select(.name == $name and .category == $category)
-                  | .id
-                ' \
-              | head -n1
-          )
+          CTFD_HEADERS=$(mktemp)
+          CTFD_BODY=$(mktemp)
+          trap 'rm -f "$CTFD_HEADERS" "$CTFD_BODY"' EXIT
+
+          echo "::group::CTFd challenge lookup debug"
+          echo "CTFd base URL: $CTFD_URL"
+          echo "CTFd API URL: $CTFD_URL/api/v1/challenges"
+          echo "CTFd token length: ${#CTFD_TOKEN}"
+
+          if ! CTFD_CURL_INFO=$(curl -sS \
+            -D "$CTFD_HEADERS" \
+            -o "$CTFD_BODY" \
+            -w 'http_code=%{http_code} content_type=%{content_type} url=%{url_effective} redirects=%{num_redirects}' \
+            -H "Authorization: Token $CTFD_TOKEN" \
+            -H "Accept: application/json" \
+            -H "Content-Type: application/json" \
+            "$CTFD_URL/api/v1/challenges"); then
+            echo "curl failed while looking up CTFd challenges"
+            exit 1
+          fi
+
+          echo "curl: $CTFD_CURL_INFO"
+          echo "response bytes: $(wc -c < "$CTFD_BODY")"
+          echo "response headers (safe subset):"
+          grep -Ei '^(HTTP/|content-type:|location:|server:|cf-ray:)' "$CTFD_HEADERS" || true
+
+          if ! jq -e 'type == "object"' "$CTFD_BODY" >/dev/null; then
+            echo "CTFd returned a non-JSON response (first 1000 bytes):"
+            head -c 1000 "$CTFD_BODY"
+            echo
+            exit 1
+          fi
+
+          echo "JSON summary: $(jq -c '{success, data_type: (.data | type), data_count: (if (.data | type) == "array" then (.data | length) else null end)}' "$CTFD_BODY")"
+          echo "::endgroup::"
+
+          EXISTING_ID=$(jq -r --arg name "$NAME" --arg category "$CATEGORY_FROM_YAML" '
+              .data[]
+              | select(.name == $name and .category == $category)
+              | .id
+            ' "$CTFD_BODY" | head -n1)
 
           PAYLOAD=$(
             jq -n \
