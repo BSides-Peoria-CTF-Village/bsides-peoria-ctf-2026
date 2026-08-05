@@ -176,6 +176,7 @@ jobs:
           EXISTING_ID=$(
             curl -sS \
               -H "Authorization: Token $CTFD_TOKEN" \
+              -H "Accept: application/json" \
               -H "Content-Type: application/json" \
               "$CTFD_URL/api/v1/challenges" \
               | jq -r --arg name "$NAME" --arg category "$CATEGORY_FROM_YAML" '
@@ -226,6 +227,7 @@ jobs:
             RESPONSE=$(
               curl -sS -X POST \
                 -H "Authorization: Token $CTFD_TOKEN" \
+                -H "Accept: application/json" \
                 -H "Content-Type: application/json" \
                 -d "$PAYLOAD" \
                 "$CTFD_URL/api/v1/challenges"
@@ -236,6 +238,7 @@ jobs:
             RESPONSE=$(
               curl -sS -X PATCH \
                 -H "Authorization: Token $CTFD_TOKEN" \
+                -H "Accept: application/json" \
                 -H "Content-Type: application/json" \
                 -d "$PAYLOAD" \
                 "$CTFD_URL/api/v1/challenges/$EXISTING_ID"
@@ -266,6 +269,7 @@ jobs:
             EXISTING_FLAGS=$(
               curl -sS \
                 -H "Authorization: Token $CTFD_TOKEN" \
+                -H "Accept: application/json" \
                 -H "Content-Type: application/json" \
                 "$CTFD_URL/api/v1/flags" \
                 | jq -r --argjson challenge_id "$CHALLENGE_ID" '
@@ -278,6 +282,7 @@ jobs:
             for FLAG_ID in $EXISTING_FLAGS; do
               curl -sS -X DELETE \
                 -H "Authorization: Token $CTFD_TOKEN" \
+                -H "Accept: application/json" \
                 "$CTFD_URL/api/v1/flags/$FLAG_ID" \
                 | jq .
             done
@@ -297,6 +302,7 @@ jobs:
 
               curl -sS -X POST \
                 -H "Authorization: Token $CTFD_TOKEN" \
+                -H "Accept: application/json" \
                 -H "Content-Type: application/json" \
                 -d "$FLAG_PAYLOAD" \
                 "$CTFD_URL/api/v1/flags" \

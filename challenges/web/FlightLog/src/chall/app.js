@@ -13,7 +13,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use((req, res, next) => {
     res.set(
         "Content-Security-Policy",
-        "default-src 'self' localhost:3000 127.0.0.1:3000 *.bsidespeoriac.tf:*"
+        "default-src 'self' localhost:3000 127.0.0.1:3000 challs.bsidespeoriac.tf:*"
     );
     next();
 });
