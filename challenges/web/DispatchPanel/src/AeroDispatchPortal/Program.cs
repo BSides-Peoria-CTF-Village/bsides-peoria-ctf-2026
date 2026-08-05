@@ -6,8 +6,8 @@ var app = builder.Build();
 
 app.UseDefaultFiles();
 app.UseStaticFiles();
-// shouldve made this more PIA themed
-
+// shouldve made this more PIA themed 
+// sidenote, when testing CI/CD for challenge deployment, I just removed and added that. theres literally no other reason I left that comment
 app.MapGet("/api/schema", () => Results.Json(new
 {
     title = "Flight release coordination",
