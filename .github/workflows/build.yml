@@ -123,6 +123,22 @@ jobs:
             https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64
           sudo chmod +x /usr/local/bin/yq
 
+      - name: Restore flags.env for shared deployment validation
+        if: ${{ !matrix.build && matrix.slug == 'vulnerablemart' }}
+        shell: bash
+        env:
+          FLAGS_ENV_CONTENT: ${{ secrets.VULNERABLEMART_FLAGS_ENV }}
+        run: |
+          set -euo pipefail
+          if [[ -z "$FLAGS_ENV_CONTENT" ]]; then
+            echo "VULNERABLEMART_FLAGS_ENV secret is not set; cannot validate flags.env"
+            exit 1
+          fi
+          printf '%s\n' "$FLAGS_ENV_CONTENT" > "${{ matrix.path }}/flags.env"
+
+      - name: Validate shared deployment flags
+        if: ${{ !matrix.build }}
+        run: python3 "${{ matrix.path }}/sync_flags.py" --check
       - name: Validate shared deployment flags
         if: ${{ !matrix.build }}
         run: python3 "${{ matrix.path }}/sync_flags.py" --check
