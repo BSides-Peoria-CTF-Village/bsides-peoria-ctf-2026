@@ -139,9 +139,6 @@ jobs:
       - name: Validate shared deployment flags
         if: ${{ !matrix.build }}
         run: python3 "${{ matrix.path }}/sync_flags.py" --check
-      - name: Validate shared deployment flags
-        if: ${{ !matrix.build }}
-        run: python3 "${{ matrix.path }}/sync_flags.py" --check
 
       - name: Log in to Harbor
         if: matrix.build
