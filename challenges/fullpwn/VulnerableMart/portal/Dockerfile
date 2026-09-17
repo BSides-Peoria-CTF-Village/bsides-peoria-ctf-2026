@@ -3,6 +3,15 @@ FROM python:3.9-slim-bullseye
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# bullseye is EOL; archive.debian.org carries bullseye/bullseye-updates but
+# not a bullseye-security tree, and never refreshes Release files -> drop the
+# security line and skip the Valid-Until check.
+RUN sed -i \
+        -e '/security/d' \
+        -e 's|deb.debian.org/debian|archive.debian.org/debian|g' \
+        /etc/apt/sources.list \
+    && echo 'Acquire::Check-Valid-Until "false";' > /etc/apt/apt.conf.d/99no-check-valid-until
+
 # wkhtmltopdf (Debian build needs an X server -> xvfb; xvfb-run needs xauth) +
 # basic fonts, plus SSH/sudo.
 RUN apt-get update && apt-get install -y --no-install-recommends \
