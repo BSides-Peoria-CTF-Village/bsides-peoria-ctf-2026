@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Seller Dashboard</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body class="bg-light">
+    <!--
+      Auth note (eng): session_token is a standard RS256 JWT signed with our
+      rotating key. Verifying keys are published at /.well-known/jwks.json
+      (PEM mirror at /jwt/public.pem). TODO: pin the verifier to RS256 before launch.
+    -->
+    <nav class="navbar navbar-dark bg-dark">
+        <a class="navbar-brand" href="/">Marketplace Seller Portal</a>
+        <div class="navbar-nav ml-auto">
+            <a class="nav-item nav-link" href="/admin">Admin Console</a>
+            <a class="nav-item nav-link" href="/logout">Logout</a>
+        </div>
+    </nav>
+
+    <div class="container mt-5">
+        <h1>Welcome, {{ user.username }}</h1>
+        <p class="text-muted">Signed in as role: <code>{{ user.role }}</code></p>
+
+        <div class="alert alert-success mt-3">
+            <strong>Seller account active.</strong><br>
+            Your seller flag: <code>{{ flag }}</code>
+        </div>
+
+        <div class="row mt-4">
+            <div class="col-md-6">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-dark text-white">My Listings</div>
+                    <div class="card-body">
+                        <p class="card-text">You have no active listings yet.</p>
+                        <button class="btn btn-sm btn-outline-secondary" disabled>New Listing</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-dark text-white">Payouts</div>
+                    <div class="card-body">
+                        <p class="card-text">Connect a payout method to start selling.</p>
+                        <button class="btn btn-sm btn-outline-secondary" disabled>Connect</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="alert alert-warning">
+            Store catalog changes and seller approvals are handled by staff in the
+            <a href="/admin">Admin Console</a>. Seller accounts are not authorized there.
+        </div>
+    </div>
+</body>
+</html>

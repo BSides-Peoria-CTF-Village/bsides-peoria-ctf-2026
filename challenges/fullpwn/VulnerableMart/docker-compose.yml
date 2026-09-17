@@ -1,0 +1,27 @@
+services:
+  web:
+    build: ./web
+    ports:
+      - "8888:80"
+    env_file:
+      - flags.env
+    restart: always
+
+  maintenance:
+    build: ./maintenance
+    ports:
+      - "50050:50050"
+    env_file:
+      - flags.env
+    restart: always
+
+  # Second app (skeleton). Locked behind the first app's admin password AND root
+  # RCE on the maintenance host (needed to derive REGISTRATION_KEY).
+  portal:
+    build: ./portal
+    ports:
+      - "8889:80"
+      - "50022:50022"   # SSH foothold (port-scan target) for the capstone
+    env_file:
+      - flags.env
+    restart: always

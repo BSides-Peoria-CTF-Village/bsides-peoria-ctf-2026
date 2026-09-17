@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Seller Registration</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body class="bg-light">
+    <div class="container" style="max-width: 480px; margin-top: 80px;">
+        <h2 class="text-center mb-4">Seller Registration</h2>
+        {% if error %}<div class="alert alert-danger">{{ error }}</div>{% endif %}
+        <form method="POST" action="/register" class="border p-4 bg-white shadow-sm">
+            <div class="form-group">
+                <label>Username</label>
+                <input type="text" name="username" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" name="password" class="form-control" required>
+            </div>
+            <div class="form-group">
+                <label>Registration Key</label>
+                <input type="text" name="registration_key" class="form-control" placeholder="Issued by store staff" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-block">Create Seller Account</button>
+        </form>
+    </div>
+</body>
+</html>

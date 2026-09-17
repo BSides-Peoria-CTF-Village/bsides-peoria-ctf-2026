@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice Generator</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body class="bg-light">
+    <nav class="navbar navbar-dark bg-dark">
+        <a class="navbar-brand" href="/admin">Admin Console</a>
+        <div class="navbar-nav ml-auto"><a class="nav-item nav-link" href="/logout">Logout</a></div>
+    </nav>
+    <div class="container mt-4" style="max-width: 720px;">
+        <h1>Invoice Generator</h1>
+        <p class="text-muted">Fill in the invoice and export it to PDF for the client.</p>
+
+        <form method="POST" action="/admin/invoices/pdf" target="_blank" class="bg-white border p-4 shadow-sm">
+            <div class="form-row">
+                <div class="form-group col-md-6">
+                    <label>Client name</label>
+                    <input type="text" name="client_name" class="form-control" value="Acme Corp">
+                </div>
+                <div class="form-group col-md-6">
+                    <label>Client email</label>
+                    <input type="text" name="client_email" class="form-control" value="ap@acme.example">
+                </div>
+            </div>
+
+            <label>Line items</label>
+            {% for i in range(3) %}
+            <div class="form-row mb-2">
+                <div class="col-md-6"><input type="text" name="item_desc" class="form-control" placeholder="Description"></div>
+                <div class="col-md-2"><input type="text" name="item_qty" class="form-control" placeholder="Qty"></div>
+                <div class="col-md-4"><input type="text" name="item_price" class="form-control" placeholder="Price"></div>
+            </div>
+            {% endfor %}
+
+            <div class="form-group mt-3">
+                <label>Notes</label>
+                <textarea name="notes" class="form-control" rows="3" placeholder="Payment terms, thank-you message, etc."></textarea>
+                <small class="text-muted">Notes support basic HTML formatting in the rendered PDF.</small>
+            </div>
+
+            <button type="submit" class="btn btn-primary">Export to PDF</button>
+            <a href="/admin" class="btn btn-link">Back</a>
+        </form>
+    </div>
+</body>
+</html>

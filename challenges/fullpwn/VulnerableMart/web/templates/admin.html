@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Internal Admin Panel</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .admin-header { background-color: #343a40; color: white; padding: 20px; margin-bottom: 30px; }
+        .flag-box { border: 2px dashed #dc3545; background-color: #f8d7da; padding: 15px; border-radius: 5px; }
+    </style>
+</head>
+<body class="bg-light">
+
+    <div class="admin-header text-center">
+        <h1>Staff Management Portal</h1>
+        <p>Authorized Personnel Only</p>
+    </div>
+
+    <div class="container">
+        <div class="flag-box text-center mb-5">
+            <h4 class="text-danger">SYSTEM ALERT: ADMINISTRATIVE ACCESS GRANTED</h4>
+            <p class="mb-0">Your Session Flag: <strong>{{ flag }}</strong></p>
+        </div>
+
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-dark text-white">Inventory Status</div>
+                    <div class="card-body">
+                        <p class="card-text">All items are currently in stock. No pending restock alerts.</p>
+                        <button class="btn btn-sm btn-outline-secondary" disabled>Edit Inventory</button>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-dark text-white">Seller Onboarding</div>
+                    <div class="card-body">
+                        <p class="card-text">Issue registration keys for prospective sellers on the Marketplace Portal.</p>
+                        <a href="/admin/seller-keys" class="btn btn-sm btn-outline-primary">Account Creation Keys</a>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-dark text-white">System Health</div>
+                    <div class="card-body">
+                        <p class="card-text text-success">Maintenance port 50050 is active.</p>
+                        <a href="/logout" class="btn btn-sm btn-danger">Logout</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

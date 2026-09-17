@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Seller Onboarding Keys</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        .doc { background:#fff; border:1px solid #ddd; border-radius:6px; padding:24px; }
+        code, pre { color:#a11; }
+    </style>
+</head>
+<body class="bg-light">
+    <div class="admin-header text-center bg-dark text-white p-4 mb-4">
+        <h1>Account Creation Keys for Prospective Sellers</h1>
+        <p class="mb-0">Internal Staff Documentation &mdash; Confidential</p>
+    </div>
+    <div class="container">
+        <div class="doc">
+            <p>
+                To onboard a new seller on the <strong>Marketplace Seller Portal</strong>, the
+                applicant must present a <strong>registration key</strong>. We do not store these
+                keys anywhere &mdash; they are derived on demand from two secrets only store staff
+                can obtain, so a key proves the holder is one of us.
+            </p>
+
+            <h4>Key derivation</h4>
+            <pre>registration_key = SHAKE256( shadow_hash + admin_password )   // 512-bit output, lowercase hex</pre>
+            <ul>
+                <li>
+                    <code>shadow_hash</code> &mdash; the hashed-password field (the
+                    <code>$6$salt$&hellip;</code> string) for the service account
+                    <code>mysterioususer</code>, taken from <code>/etc/shadow</code> on the
+                    <strong>maintenance host</strong> (port <code>50050</code>).
+                </li>
+                <li>
+                    <code>admin_password</code> &mdash; this store's administrator password.
+                </li>
+            </ul>
+            <p>
+                Concatenate the two values directly (<em>shadow_hash first, admin_password second,
+                no separator</em>), then take the <strong>SHAKE256</strong> digest with a
+                <strong>512-bit (64-byte)</strong> output, encoded as lowercase hex (128 characters).
+            </p>
+            <p class="text-muted mb-0">
+                Reminder: only generate keys for vetted applicants. Rotate the admin password if a
+                key is ever leaked, as that invalidates every outstanding key.
+            </p>
+        </div>
+        <a href="/admin" class="btn btn-sm btn-secondary mt-3">&larr; Back to Admin</a>
+    </div>
+</body>
+</html>

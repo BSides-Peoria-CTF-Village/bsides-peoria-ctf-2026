@@ -1,0 +1,20 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Console</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body class="bg-light">
+    <div class="container" style="margin-top: 100px; max-width: 560px;">
+        <div class="alert alert-danger text-center">
+            <h4>403 &mdash; Administrators Only</h4>
+            <p class="mb-0">
+                Your token authenticates you as <code>{{ user.username }}</code>
+                with role <code>{{ user.role }}</code>. This console requires role
+                <code>admin</code>.
+            </p>
+        </div>
+    </div>
+</body>
+</html>

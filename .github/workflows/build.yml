@@ -31,7 +31,9 @@ jobs:
         run: |
           set -euo pipefail
 
-          if git rev-parse HEAD^ >/dev/null 2>&1; then
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]] || git diff --name-only HEAD^ HEAD -- .github/workflows/build.yml 2>/dev/null | grep -q .; then
+            CHANGED_FILES=$(git ls-files challenges)
+          elif git rev-parse HEAD^ >/dev/null 2>&1; then
             echo "Changed files:"
             git diff --name-only HEAD^ HEAD
 
@@ -59,7 +61,19 @@ jobs:
               PATH_ON_DISK="$CHAL"
             fi
 
+            YAML_FILES=()
+            BUILD=false
             if [[ -f "$PATH_ON_DISK/Dockerfile" && -f "$PATH_ON_DISK/challenge.yaml" ]]; then
+              YAML_FILES=("$PATH_ON_DISK/challenge.yaml")
+              BUILD=true
+            elif [[ -f "$PATH_ON_DISK/docker-compose.yml" && -d "$PATH_ON_DISK/challenges" ]]; then
+              # One shared deployment, with an independently scored entry per flag.
+              shopt -s nullglob
+              YAML_FILES=("$PATH_ON_DISK"/challenges/*.yaml)
+              shopt -u nullglob
+            fi
+
+            for YAML_FILE in "${YAML_FILES[@]}"; do
               CATEGORY=$(dirname "$CHAL" | tr '[:upper:]' '[:lower:]')
               SLUG=$(basename "$CHAL" | tr '[:upper:]' '[:lower:]')
 
@@ -67,8 +81,9 @@ jobs:
                 --arg category "$CATEGORY" \
                 --arg slug "$SLUG" \
                 --arg path "$PATH_ON_DISK" \
-                --arg yaml "$PATH_ON_DISK/challenge.yaml" \
-                '{category:$category, slug:$slug, path:$path, yaml:$yaml}')
+                --arg yaml "$YAML_FILE" \
+                --argjson build "$BUILD" \
+                '{category:$category, slug:$slug, path:$path, yaml:$yaml, build:$build}')
 
               if [[ "$FIRST" == "true" ]]; then
                 FIRST=false
@@ -77,9 +92,7 @@ jobs:
               fi
 
               JSON+="$ITEM"
-            else
-              echo "Skipping $PATH_ON_DISK; Dockerfile and challenge.yaml are both required."
-            fi
+            done
           done
 
           JSON+="]"
@@ -110,7 +123,12 @@ jobs:
             https://github.com/mikefarah/yq/releases/download/v4.44.3/yq_linux_amd64
           sudo chmod +x /usr/local/bin/yq
 
+      - name: Validate shared deployment flags
+        if: ${{ !matrix.build }}
+        run: python3 "${{ matrix.path }}/sync_flags.py" --check
+
       - name: Log in to Harbor
+        if: matrix.build
         uses: docker/login-action@v3
         with:
           registry: ${{ env.HARBOR_REGISTRY }}
@@ -118,6 +136,7 @@ jobs:
           password: ${{ secrets.HARBOR_PASSWORD }}
 
       - name: Build and push image
+        if: matrix.build
         uses: docker/build-push-action@v6
         with:
           context: ${{ matrix.path }}
@@ -134,6 +153,7 @@ jobs:
           CATEGORY: ${{ matrix.category }}
           SLUG: ${{ matrix.slug }}
           YAML_FILE: ${{ matrix.yaml }}
+          BUILD_IMAGE: ${{ matrix.build }}
           IMAGE: ${{ env.HARBOR_REGISTRY }}/${{ env.HARBOR_PROJECT }}/${{ matrix.category }}/${{ matrix.slug }}:latest
         run: |
           set -euo pipefail
@@ -168,6 +188,14 @@ jobs:
           PREFIX=$(yq -r '.docker_container_prefix // "ctfd"' "$YAML_FILE")
           CONNECTION_SCHEME=$(yq -r '.connection_scheme // .docker_connection_scheme // ""' "$YAML_FILE")
           IMAGE_FROM_YAML=$(yq -r '.docker_image // ""' "$YAML_FILE")
+          TYPE=docker
+          if [[ "$BUILD_IMAGE" == "false" ]]; then
+            TYPE=$(yq -r '.type // "dynamic"' "$YAML_FILE")
+            if [[ "$TYPE" != "dynamic" ]]; then
+              echo "Shared deployment scoring entries must use type: dynamic"
+              exit 1
+            fi
+          fi
 
           if [[ -n "$IMAGE_FROM_YAML" && "$IMAGE_FROM_YAML" != "null" ]]; then
             IMAGE="$IMAGE_FROM_YAML"
@@ -226,6 +254,7 @@ jobs:
               --arg prefix "$PREFIX" \
               --arg connection_scheme "$CONNECTION_SCHEME" \
               --arg function "$FUNCTION" \
+              --arg type "$TYPE" \
               --argjson initial "$INITIAL" \
               --argjson minimum "$MINIMUM" \
               --argjson decay "$DECAY" \
@@ -242,11 +271,11 @@ jobs:
                 state: $state,
                 max_attempts: $max_attempts,
                 attribution: $attribution,
-                type: "docker",
+                type: $type,
                 docker_image: $image,
                 docker_container_prefix: $prefix,
                 docker_connection_scheme: $connection_scheme
-              }'
+              } | if .type == "dynamic" then del(.docker_image, .docker_container_prefix, .docker_connection_scheme) else . end'
           )
 
           if [[ -z "$EXISTING_ID" ]]; then
@@ -291,7 +320,7 @@ jobs:
               | jq -s .
           )
 
-          if [[ "$CHALLENGE_CREATED" == "true" && "$(echo "$FLAGS_JSON" | jq 'length')" -gt 0 ]]; then
+          if [[ ( "$CHALLENGE_CREATED" == "true" || "$TYPE" == "dynamic" ) && "$(echo "$FLAGS_JSON" | jq 'length')" -gt 0 ]]; then
             echo "Replacing flags for challenge #$CHALLENGE_ID"
 
             EXISTING_FLAGS=$(
@@ -308,11 +337,11 @@ jobs:
             )
 
             for FLAG_ID in $EXISTING_FLAGS; do
-              curl -sS -X DELETE \
+              curl --fail-with-body -sS -X DELETE \
                 -H "Authorization: Token $CTFD_TOKEN" \
                 -H "Accept: application/json" \
                 "$CTFD_URL/api/v1/flags/$FLAG_ID" \
-                | jq .
+                | jq -e '.success == true'
             done
 
             echo "$FLAGS_JSON" | jq -r '.[]' | while IFS= read -r FLAG; do
@@ -328,13 +357,13 @@ jobs:
                   }'
               )
 
-              curl -sS -X POST \
+              curl --fail-with-body -sS -X POST \
                 -H "Authorization: Token $CTFD_TOKEN" \
                 -H "Accept: application/json" \
                 -H "Content-Type: application/json" \
                 -d "$FLAG_PAYLOAD" \
                 "$CTFD_URL/api/v1/flags" \
-                | jq .
+                | jq -e '.success == true'
             done
           elif [[ "$(echo "$FLAGS_JSON" | jq 'length')" -gt 0 ]]; then
             echo "CTFd challenge #$CHALLENGE_ID already exists; leaving its flags unchanged."

@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Portal Admin Console</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+</head>
+<body class="bg-light">
+    <div class="bg-dark text-white text-center p-4 mb-4">
+        <h1>Marketplace Admin Console</h1>
+        <p class="mb-0">Authenticated as <code>{{ user.username }}</code> (role: <code>{{ user.role }}</code>)</p>
+    </div>
+    <div class="container">
+        <div class="alert alert-danger text-center" style="border:2px dashed #dc3545;">
+            <h4 class="text-danger">ADMINISTRATIVE ACCESS GRANTED</h4>
+            <p class="mb-0">Admin flag: <strong>{{ flag }}</strong></p>
+        </div>
+        <div class="card shadow-sm mb-4">
+            <div class="card-header bg-dark text-white">Pending Seller Approvals</div>
+            <div class="card-body"><p class="card-text text-muted">No pending approvals.</p></div>
+        </div>
+        <div class="card shadow-sm">
+            <div class="card-header bg-dark text-white">Billing</div>
+            <div class="card-body">
+                <p class="card-text">Generate and export client invoices to PDF.</p>
+                <a href="/admin/invoices" class="btn btn-sm btn-outline-primary">Invoice Generator</a>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
