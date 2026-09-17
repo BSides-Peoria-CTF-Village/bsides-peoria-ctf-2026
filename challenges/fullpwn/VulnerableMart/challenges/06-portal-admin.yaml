@@ -15,4 +15,4 @@ initial: 500
 minimum: 100
 decay: 9
 state: visible
-flag: "PIA{jwt_rs256_hs256_c0nfus10n_viehgl869387gb7qudjppvi8}"
+flag: "PIA{jwt_rs256_hs256_c0nfus10n_ca8pdeoewtuww18dfcu7pegn}"
