@@ -63,6 +63,7 @@ jobs:
 
             YAML_FILES=()
             BUILD=false
+            IMAGE_DOCKERFILES=()
             if [[ -f "$PATH_ON_DISK/Dockerfile" && -f "$PATH_ON_DISK/challenge.yaml" ]]; then
               YAML_FILES=("$PATH_ON_DISK/challenge.yaml")
               BUILD=true
@@ -70,6 +71,10 @@ jobs:
               # One shared deployment, with an independently scored entry per flag.
               shopt -s nullglob
               YAML_FILES=("$PATH_ON_DISK"/challenges/*.yaml)
+              # Each service subdirectory with its own Dockerfile gets built and
+              # pushed to Harbor too; a launcher entry's docker_image: stack:<name>
+              # points a docker-backend stack.json at these by name.
+              IMAGE_DOCKERFILES=("$PATH_ON_DISK"/*/Dockerfile)
               shopt -u nullglob
             fi
 
@@ -83,6 +88,29 @@ jobs:
                 --arg path "$PATH_ON_DISK" \
                 --arg yaml "$YAML_FILE" \
                 --argjson build "$BUILD" \
+                '{category:$category, slug:$slug, path:$path, yaml:$yaml, build:$build}')
+
+              if [[ "$FIRST" == "true" ]]; then
+                FIRST=false
+              else
+                JSON+=","
+              fi
+
+              JSON+="$ITEM"
+            done
+
+            for DOCKERFILE in "${IMAGE_DOCKERFILES[@]}"; do
+              SERVICE_DIR=$(dirname "$DOCKERFILE")
+              SERVICE=$(basename "$SERVICE_DIR" | tr '[:upper:]' '[:lower:]')
+              CATEGORY=$(dirname "$CHAL" | tr '[:upper:]' '[:lower:]')
+              SLUG=$(basename "$CHAL" | tr '[:upper:]' '[:lower:]')
+
+              ITEM=$(jq -cn \
+                --arg category "$CATEGORY" \
+                --arg slug "${SLUG}-${SERVICE}" \
+                --arg path "$SERVICE_DIR" \
+                --arg yaml "" \
+                --argjson build true \
                 '{category:$category, slug:$slug, path:$path, yaml:$yaml, build:$build}')
 
               if [[ "$FIRST" == "true" ]]; then
@@ -160,6 +188,7 @@ jobs:
             ${{ env.HARBOR_REGISTRY }}/${{ env.HARBOR_PROJECT }}/${{ matrix.category }}/${{ matrix.slug }}:${{ github.sha }}
 
       - name: Create or update CTFd challenge
+        if: matrix.yaml != ''
         shell: bash
         env:
           CTFD_TOKEN: ${{ secrets.CTFD_TOKEN }}
