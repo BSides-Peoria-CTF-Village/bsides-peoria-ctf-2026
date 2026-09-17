@@ -134,7 +134,10 @@ jobs:
 
     strategy:
       fail-fast: false
-      max-parallel: 3
+      # CTFd's /api/v1/flags read-then-delete-then-recreate sequence isn't
+      # safe under concurrent callers (observed non-JSON responses with as
+      # few as 2 overlapping requests) -- serialize entirely.
+      max-parallel: 1
       matrix:
         include: ${{ fromJson(needs.detect.outputs.matrix) }}
 
