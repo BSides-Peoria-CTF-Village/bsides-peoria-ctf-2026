@@ -100,14 +100,14 @@ def main():
 
         # Submittable flags (one per step). Prefixes name the step; 24-char random
         # tail resists brute-forcing.
-        "STAFF_FLAG":        f"CTF{{staff_login_success_{rand(24)}}}",
-        "ADMIN_FLAG":        f"CTF{{4dm1n_v1ew_h34d3r_{rand(24)}}}",
-        "CHECKOUT_FLAG":     f"CTF{{burp_param_tamp3ring_{rand(24)}}}",
-        "SHELL_FLAG":        f"CTF{{cmd_1nj3ction_sh3ll_{rand(24)}}}",
-        "SELLER_FLAG":       f"CTF{{s3ller_portal_r3g1st3r3d_{rand(24)}}}",
-        "PORTAL_ADMIN_FLAG": f"CTF{{jwt_rs256_hs256_c0nfus10n_{rand(24)}}}",
-        "USER_FLAG":         f"CTF{{pdf_lf1_t0_ssh_f00th0ld_{rand(24)}}}",
-        "ROOT_FLAG":         f"CTF{{chef_g7f0b1n_r00t_pwn3d_{rand(24)}}}",
+        "STAFF_FLAG":        f"PIA{{staff_login_success_{rand(24)}}}",
+        "ADMIN_FLAG":        f"PIA{{4dm1n_v1ew_h34d3r_{rand(24)}}}",
+        "CHECKOUT_FLAG":     f"PIA{{burp_param_tamp3ring_{rand(24)}}}",
+        "SHELL_FLAG":        f"PIA{{cmd_1nj3ction_sh3ll_{rand(24)}}}",
+        "SELLER_FLAG":       f"PIA{{s3ller_portal_r3g1st3r3d_{rand(24)}}}",
+        "PORTAL_ADMIN_FLAG": f"PIA{{jwt_rs256_hs256_c0nfus10n_{rand(24)}}}",
+        "USER_FLAG":         f"PIA{{pdf_lf1_t0_ssh_f00th0ld_{rand(24)}}}",
+        "ROOT_FLAG":         f"PIA{{chef_g7f0b1n_r00t_pwn3d_{rand(24)}}}",
     }
 
     with open(args.out, 'w') as f:

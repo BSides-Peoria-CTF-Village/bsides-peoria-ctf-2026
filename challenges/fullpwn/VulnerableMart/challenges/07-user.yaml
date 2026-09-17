@@ -5,12 +5,14 @@ type: dynamic
 description: |
   Get a foothold on the invoicing host and recover the user flag.
 
-  All eight Vulnerable Mart challenges share one environment. Use the host
-  supplied by the organizers; the shop starts on HTTP port 8888.
+  Start your team's environment from **Vulnerable Mart - Staff Login**.
+  That single environment serves all eight flags and lasts 90 minutes.
+  Use the Shop, Maintenance, Seller Portal and SSH endpoints shown there.
+  Stop then Start there to reset the entire environment.
   Submit the flag for this stage here.
 function: logarithmic
 initial: 500
 minimum: 100
 decay: 9
 state: visible
-flag: "CTF{pdf_lf1_t0_ssh_f00th0ld_up0ltn9xr23kgmjrei09n3l5}"
+flag: "PIA{pdf_lf1_t0_ssh_f00th0ld_ondthcw1pep43kngliahrq86}"

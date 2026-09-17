@@ -1,0 +1,25 @@
+{
+  "ttl_seconds": 5400,
+  "env_file": "vulnerablemart.env",
+  "services": {
+    "web": {
+      "image": "harbor.bsidespeoriac.tf/bsides-peoria-ctf/fullpwn/vulnerablemart-web:latest",
+      "env": ["SECRET_KEY", "ADMIN_PASSWORD", "STAFF_FLAG", "ADMIN_FLAG", "CHECKOUT_FLAG"],
+      "ports": {"80": {"label": "Shop", "scheme": "http"}}
+    },
+    "maintenance": {
+      "image": "harbor.bsidespeoriac.tf/bsides-peoria-ctf/fullpwn/vulnerablemart-maintenance:latest",
+      "env": ["SHELL_FLAG", "MYSTERIOUS_USER_HASH_B64"],
+      "ports": {"50050": {"label": "Maintenance", "scheme": ""}}
+    },
+    "portal": {
+      "image": "harbor.bsidespeoriac.tf/bsides-peoria-ctf/fullpwn/vulnerablemart-portal:latest",
+      "memory": "2g",
+      "env": ["REGISTRATION_KEY", "SSH_PASSWORD", "SELLER_FLAG", "PORTAL_ADMIN_FLAG", "USER_FLAG", "ROOT_FLAG"],
+      "ports": {
+        "80": {"label": "Seller Portal", "scheme": "http"},
+        "50022": {"label": "SSH", "scheme": ""}
+      }
+    }
+  }
+}

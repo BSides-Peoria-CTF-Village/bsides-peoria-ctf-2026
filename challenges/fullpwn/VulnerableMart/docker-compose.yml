@@ -3,25 +3,35 @@ services:
     build: ./web
     ports:
       - "8888:80"
-    env_file:
-      - flags.env
+    environment:
+      SECRET_KEY: ${SECRET_KEY:?Load flags.env with --env-file}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD:?Load flags.env with --env-file}
+      STAFF_FLAG: ${STAFF_FLAG:?Load flags.env with --env-file}
+      ADMIN_FLAG: ${ADMIN_FLAG:?Load flags.env with --env-file}
+      CHECKOUT_FLAG: ${CHECKOUT_FLAG:?Load flags.env with --env-file}
     restart: always
 
   maintenance:
     build: ./maintenance
     ports:
       - "50050:50050"
-    env_file:
-      - flags.env
+    environment:
+      SHELL_FLAG: ${SHELL_FLAG:?Load flags.env with --env-file}
+      MYSTERIOUS_USER_HASH_B64: ${MYSTERIOUS_USER_HASH_B64:?Load flags.env with --env-file}
     restart: always
 
-  # Second app (skeleton). Locked behind the first app's admin password AND root
+  # Locked behind the first app's admin password AND root
   # RCE on the maintenance host (needed to derive REGISTRATION_KEY).
   portal:
     build: ./portal
     ports:
       - "8889:80"
       - "50022:50022"   # SSH foothold (port-scan target) for the capstone
-    env_file:
-      - flags.env
+    environment:
+      REGISTRATION_KEY: ${REGISTRATION_KEY:?Load flags.env with --env-file}
+      SSH_PASSWORD: ${SSH_PASSWORD:?Load flags.env with --env-file}
+      SELLER_FLAG: ${SELLER_FLAG:?Load flags.env with --env-file}
+      PORTAL_ADMIN_FLAG: ${PORTAL_ADMIN_FLAG:?Load flags.env with --env-file}
+      USER_FLAG: ${USER_FLAG:?Load flags.env with --env-file}
+      ROOT_FLAG: ${ROOT_FLAG:?Load flags.env with --env-file}
     restart: always

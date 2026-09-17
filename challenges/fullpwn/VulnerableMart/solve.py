@@ -29,7 +29,7 @@ import time
 
 import requests
 
-FLAG_RE = re.compile(r'CTF\{[^}]+\}')
+FLAG_RE = re.compile(r'PIA\{[^}]+\}')
 
 
 def find_flag(text):
