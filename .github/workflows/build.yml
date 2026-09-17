@@ -204,9 +204,8 @@ jobs:
           TYPE=docker
           if [[ "$BUILD_IMAGE" == "false" ]]; then
             TYPE=$(yq -r '.type // "dynamic"' "$YAML_FILE")
-            echo "DEBUG: YAML_FILE=$YAML_FILE TYPE='$TYPE' IMAGE_FROM_YAML='$IMAGE_FROM_YAML'"
-            if [[ "$TYPE" != "dynamic" ]]; then
-              echo "Shared deployment scoring entries must use type: dynamic"
+            if [[ "$TYPE" != "dynamic" && "$TYPE" != "docker" ]]; then
+              echo "Shared deployment scoring entries must use type: dynamic, or type: docker for a launcher entry"
               exit 1
             fi
           fi
