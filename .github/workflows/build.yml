@@ -230,6 +230,7 @@ jobs:
           PREFIX=$(yq -r '.docker_container_prefix // "ctfd"' "$YAML_FILE")
           CONNECTION_SCHEME=$(yq -r '.connection_scheme // .docker_connection_scheme // ""' "$YAML_FILE")
           IMAGE_FROM_YAML=$(yq -r '.docker_image // ""' "$YAML_FILE")
+          PRIVILEGED=$(yq -r '.privileged // false' "$YAML_FILE")
           TYPE=docker
           if [[ "$BUILD_IMAGE" == "false" ]]; then
             TYPE=$(yq -r '.type // "dynamic"' "$YAML_FILE")
@@ -301,6 +302,7 @@ jobs:
               --argjson minimum "$MINIMUM" \
               --argjson decay "$DECAY" \
               --argjson max_attempts "$MAX_ATTEMPTS" \
+              --argjson privileged "$PRIVILEGED" \
               '{
                 name: $name,
                 category: $category,
@@ -316,8 +318,9 @@ jobs:
                 type: $type,
                 docker_image: $image,
                 docker_container_prefix: $prefix,
-                docker_connection_scheme: $connection_scheme
-              } | if .type == "dynamic" then del(.docker_image, .docker_container_prefix, .docker_connection_scheme) else . end'
+                docker_connection_scheme: $connection_scheme,
+                privileged: $privileged
+              } | if .type == "dynamic" then del(.docker_image, .docker_container_prefix, .docker_connection_scheme, .privileged) else . end'
           )
 
           if [[ -z "$EXISTING_ID" ]]; then

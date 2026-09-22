@@ -1,0 +1,12 @@
+name: Boarding
+category: pwn
+connection_scheme: tcp
+description: |
+  It's time to scan your boarding pass! No one's at the gate though, how do we get in?
+function: logarithmic
+initial: 500
+minimum: 100
+decay: 9
+state: visible
+privileged: true
+flag: PIA{st4ck_p1v0t1ng_l0ngjmp?!}
