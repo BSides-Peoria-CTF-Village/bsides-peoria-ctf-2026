@@ -368,48 +368,58 @@ jobs:
           if [[ ( "$CHALLENGE_CREATED" == "true" || "$TYPE" == "dynamic" ) && "$(echo "$FLAGS_JSON" | jq 'length')" -gt 0 ]]; then
             echo "Replacing flags for challenge #$CHALLENGE_ID"
 
-            EXISTING_FLAGS=$(
-              curl -sS \
-                -H "Authorization: Token $CTFD_TOKEN" \
-                -H "Accept: application/json" \
-                -H "Content-Type: application/json" \
-                "$CTFD_URL/api/v1/flags" \
-                | jq -r --argjson challenge_id "$CHALLENGE_ID" '
-                    .data[]
-                    | select(.challenge_id == $challenge_id)
-                    | .id
-                  '
-            )
+            # Best-effort: challenge metadata (name/description/image/etc.) is
+            # already synced above by this point. A flaky CTFd response here
+            # (seen under load: non-JSON bodies) shouldn't fail the whole job
+            # and undo that -- warn and move on instead.
+            if ! (
+              set -euo pipefail
 
-            for FLAG_ID in $EXISTING_FLAGS; do
-              curl --fail-with-body -sS -X DELETE \
-                -H "Authorization: Token $CTFD_TOKEN" \
-                -H "Accept: application/json" \
-                "$CTFD_URL/api/v1/flags/$FLAG_ID" \
-                | jq -e '.success == true'
-            done
-
-            echo "$FLAGS_JSON" | jq -r '.[]' | while IFS= read -r FLAG; do
-              FLAG_PAYLOAD=$(
-                jq -n \
-                  --argjson challenge_id "$CHALLENGE_ID" \
-                  --arg content "$FLAG" \
-                  '{
-                    challenge_id: $challenge_id,
-                    type: "static",
-                    content: $content,
-                    data: "case_insensitive"
-                  }'
+              EXISTING_FLAGS=$(
+                curl -sS \
+                  -H "Authorization: Token $CTFD_TOKEN" \
+                  -H "Accept: application/json" \
+                  -H "Content-Type: application/json" \
+                  "$CTFD_URL/api/v1/flags" \
+                  | jq -r --argjson challenge_id "$CHALLENGE_ID" '
+                      .data[]
+                      | select(.challenge_id == $challenge_id)
+                      | .id
+                    '
               )
 
-              curl --fail-with-body -sS -X POST \
-                -H "Authorization: Token $CTFD_TOKEN" \
-                -H "Accept: application/json" \
-                -H "Content-Type: application/json" \
-                -d "$FLAG_PAYLOAD" \
-                "$CTFD_URL/api/v1/flags" \
-                | jq -e '.success == true'
-            done
+              for FLAG_ID in $EXISTING_FLAGS; do
+                curl --fail-with-body -sS -X DELETE \
+                  -H "Authorization: Token $CTFD_TOKEN" \
+                  -H "Accept: application/json" \
+                  "$CTFD_URL/api/v1/flags/$FLAG_ID" \
+                  | jq -e '.success == true'
+              done
+
+              echo "$FLAGS_JSON" | jq -r '.[]' | while IFS= read -r FLAG; do
+                FLAG_PAYLOAD=$(
+                  jq -n \
+                    --argjson challenge_id "$CHALLENGE_ID" \
+                    --arg content "$FLAG" \
+                    '{
+                      challenge_id: $challenge_id,
+                      type: "static",
+                      content: $content,
+                      data: "case_insensitive"
+                    }'
+                )
+
+                curl --fail-with-body -sS -X POST \
+                  -H "Authorization: Token $CTFD_TOKEN" \
+                  -H "Accept: application/json" \
+                  -H "Content-Type: application/json" \
+                  -d "$FLAG_PAYLOAD" \
+                  "$CTFD_URL/api/v1/flags" \
+                  | jq -e '.success == true'
+              done
+            ); then
+              echo "::warning::Could not sync flags for challenge #$CHALLENGE_ID ($CATEGORY_FROM_YAML/$NAME) -- leaving its existing flags unchanged. Challenge metadata and image were still updated."
+            fi
           elif [[ "$(echo "$FLAGS_JSON" | jq 'length')" -gt 0 ]]; then
             echo "CTFd challenge #$CHALLENGE_ID already exists; leaving its flags unchanged."
           else
