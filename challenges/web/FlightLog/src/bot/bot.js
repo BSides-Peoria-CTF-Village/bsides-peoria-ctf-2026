@@ -104,7 +104,7 @@ async function visit(notePath) {
     });
 
     // Let any allowed JS execute.
-    await page.waitForTimeout(5000);
+    await new Promise((resolve) => setTimeout(resolve, 5000));
   } finally {
     await browser.close();
   }

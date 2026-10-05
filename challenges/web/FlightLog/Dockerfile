@@ -5,6 +5,13 @@ FROM node:${NODE_VERSION}-alpine
 
 ENV NODE_ENV=production
 
+# Puppeteer's own Chrome download targets glibc and silently no-ops on
+# Alpine's musl libc, so the bot's puppeteer.launch() fails at runtime
+# with "Could not find Chrome" unless we install Alpine's own chromium
+# package and point Puppeteer at it instead.
+RUN apk add --no-cache chromium nss freetype harfbuzz ca-certificates ttf-freefont
+ENV PUPPETEER_SKIP_DOWNLOAD=true
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 WORKDIR /usr/src/app
 

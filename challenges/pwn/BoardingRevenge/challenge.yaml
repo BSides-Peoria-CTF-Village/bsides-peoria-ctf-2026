@@ -1,0 +1,15 @@
+name: Boarding Revenge
+category: pwn
+connection_scheme: tcp
+description: |
+  The gate agents patched the leaky terminal. No more free gate access codes
+  printed on the floor -- but someone left a stray baggage-reclaim routine
+  lying around, and the departure board is bolted down at a fixed address.
+  Same boarding pass, no handouts. Can you still get through?
+function: logarithmic
+initial: 500
+minimum: 100
+decay: 9
+state: visible
+privileged: true
+flag: PIA{CHANGE_ME_revenge_flag}
