@@ -241,6 +241,11 @@ every one of which is forced off:
 
 There is no real vulnerability and no alternate flag in this file.
 
+The `users` table also holds a second account, `rylan` (seeded in
+`web/init_db.py`, base64-encoded like `admin`). The same UNION SQLi from Step 3
+dumps it. It grants no web flag and does not affect the admin login path or
+`solve.py`.
+
 ## QA checklist (run after any change)
 - [ ] `?template=../app.py` returns source; `?template=../init_db.py` and
       `?template=../database.db` both 404.
