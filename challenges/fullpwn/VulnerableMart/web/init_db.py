@@ -20,6 +20,11 @@ def init_db():
     cursor.execute("INSERT OR IGNORE INTO users (username, password) VALUES (?, ?)",
                    ('admin', encoded))
 
+    rylan_password = "P!@Dir3ctor2026"
+    rylan_encoded = base64.b64encode(rylan_password.encode()).decode()
+    cursor.execute("INSERT OR IGNORE INTO users (username, password) VALUES (?, ?)",
+                   ('rylan', rylan_encoded))
+
     cursor.execute('''
         CREATE TABLE IF NOT EXISTS products (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
